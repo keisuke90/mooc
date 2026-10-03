@@ -32,9 +32,10 @@ public class BST<T extends Comparable<? super T>> {
      * @throws java.lang.IllegalArgumentException If data is null.
      */
     public void add(T data) {
-      if (data == null) throw new IllegalArgumentException();
-      
-      root = rAdd(root, data);
+        if (data == null) {
+            throw new IllegalArgumentException("Cannot add null data.");
+        }
+        root = rAdd(root, data);
     }
 
     /**
@@ -65,11 +66,12 @@ public class BST<T extends Comparable<? super T>> {
      * @throws java.util.NoSuchElementException   If the data is not in the tree.
      */
     public T remove(T data) {
-      if (data == null) throw new IllegalArgumentException();
-      BSTNode<T> dummy = new BSTNode<>(null); 
-      root = rRemove(root, data, dummy);
-      
-      return dummy.getData();
+        if (data == null) {
+            throw new IllegalArgumentException("Cannot remove null data.");
+        }
+        BSTNode<T> removed = new BSTNode<>(null);
+        root = rRemove(root, data, removed);
+        return removed.getData();
     }
 
     /**
@@ -98,57 +100,72 @@ public class BST<T extends Comparable<? super T>> {
         return size;
     }
 
-    private BSTNode<T> rAdd(BSTNode<T> currentNode, T data) {
-      if (currentNode == null) {
-        size++;
-        return new BSTNode<T>(data);
-      }
+    /**
+     * Returns the subtree rooted at node with data added as a new leaf,
+     * or unchanged if data is already present.
+     */
+    private BSTNode<T> rAdd(BSTNode<T> node, T data) {
+        if (node == null) {
+            size++;
+            return new BSTNode<>(data);
+        }
 
-      int compareResult = currentNode.getData().compareTo(data);
-      if (compareResult < 0) {
-        currentNode.setRight(rAdd(currentNode.getRight(), data));
-      } else if (compareResult > 0) {
-        currentNode.setLeft(rAdd(currentNode.getLeft(), data));
-      }
-
-      return currentNode;
+        int cmp = data.compareTo(node.getData());
+        if (cmp < 0) {
+            node.setLeft(rAdd(node.getLeft(), data));
+        } else if (cmp > 0) {
+            node.setRight(rAdd(node.getRight(), data));
+        }
+        return node;
     }
 
-    private BSTNode<T> rRemove(BSTNode<T> currentNode, T data, BSTNode<T> dummy) {
-      if (currentNode == null) throw new NoSuchElementException();
-      
-      int compareResult = currentNode.getData().compareTo(data);
-      if (compareResult < 0) {
-        currentNode.setRight(rRemove(currentNode.getRight(), data, dummy));
-      } else if (compareResult > 0) {
-        currentNode.setLeft(rRemove(currentNode.getLeft(), data, dummy));
-      } else {
-        dummy.setData(currentNode.getData());
+    /**
+     * Returns the subtree rooted at node with data removed. The data stored
+     * in the tree is written into removed.
+     */
+    private BSTNode<T> rRemove(BSTNode<T> node, T data, BSTNode<T> removed) {
+        if (node == null) {
+            throw new NoSuchElementException("Data is not in the tree.");
+        }
+
+        int cmp = data.compareTo(node.getData());
+        if (cmp < 0) {
+            node.setLeft(rRemove(node.getLeft(), data, removed));
+            return node;
+        }
+        if (cmp > 0) {
+            node.setRight(rRemove(node.getRight(), data, removed));
+            return node;
+        }
+
+        removed.setData(node.getData());
         size--;
 
-        if (currentNode.getLeft() == null && currentNode.getRight() == null) {
-          return null;
-        } else if (currentNode.getLeft() != null && currentNode.getRight() == null) {
-          return currentNode.getLeft();
-        } else if (currentNode.getLeft() == null && currentNode.getRight() != null) {
-          return currentNode.getRight();
-        } else {
-          BSTNode<T> dummy2 = new BSTNode<>(null);
-          currentNode.setRight(removeSuccessor(currentNode.getRight(), dummy2));
-          currentNode.setData(dummy2.getData());
+        // Zero or one child: replace the node with its only child (or null).
+        if (node.getLeft() == null) {
+            return node.getRight();
         }
-      }
+        if (node.getRight() == null) {
+            return node.getLeft();
+        }
 
-      return currentNode;
+        // Two children: replace the data with the successor's.
+        BSTNode<T> successor = new BSTNode<>(null);
+        node.setRight(removeSuccessor(node.getRight(), successor));
+        node.setData(successor.getData());
+        return node;
     }
 
-    private BSTNode<T> removeSuccessor(BSTNode<T> currentNode, BSTNode<T> dummy) {
-      if (currentNode.getLeft() == null) {
-        dummy.setData(currentNode.getData());
-        return currentNode.getRight();
-      } else {
-        currentNode.setLeft(removeSuccessor(currentNode.getLeft(), dummy));
-        return currentNode;
-      }
+    /**
+     * Returns the subtree rooted at node with its minimum removed. The
+     * minimum's data is written into successor.
+     */
+    private BSTNode<T> removeSuccessor(BSTNode<T> node, BSTNode<T> successor) {
+        if (node.getLeft() == null) {
+            successor.setData(node.getData());
+            return node.getRight();
+        }
+        node.setLeft(removeSuccessor(node.getLeft(), successor));
+        return node;
     }
 }
